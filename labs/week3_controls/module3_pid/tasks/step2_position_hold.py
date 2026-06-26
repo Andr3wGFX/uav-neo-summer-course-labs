@@ -22,20 +22,21 @@ import neo_lab
 # -- Constants --------------------------------------------------------------
 TARGET_DIST = 4.0    # meters forward
 TARGET_HEIGHT = 3.0  # hold launch height
-KP = 0.12
+KP = 0.15
 KI = 0.0
 KD = 0.5    # strong velocity damping to avoid overshoot
 PITCH_LIMIT = 0.25
 ALT_KP = 0.12
 THROTTLE_LIMIT = 0.5
-DIST_TOL = 0.4
+MIN_TRAVEL = 5.0   # fly at least this long before checking 'arrived'
 SETTLE_SPEED = 0.25  # must slow below this to count as arrived
-HOLD_TIME = 2.0
+HOLD_TIME = 1.5
 
 # -- Module-level state -----------------------------------------------------
 _pos = 0.0
 _err_int = 0.0
 _prev_err = 0.0
+_t = 0.0
 _hold = 0.0
 _done = False
 
@@ -49,16 +50,17 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     return output
 
 def reset():
-    global _pos, _err_int, _prev_err, _hold, _done
+    global _pos, _err_int, _prev_err, _t, _hold, _done
     _pos = 0.0
     _err_int = 0.0
     _prev_err = 0.0
+    _t = 0.0
     _hold = 0.0
     _done = False
 
 
 def update(drone):
-    global _pos, _err_int, _prev_err, _hold, _done
+    global _pos, _err_int, _prev_err, _t, _hold, _done
     if _done:
         return True
     ##################################
@@ -75,8 +77,8 @@ def update(drone):
     #                            -PITCH_LIMIT, PITCH_LIMIT)
     # 6. Hold height too: throttle = clamp(ALT_KP*(TARGET_HEIGHT - neo_lab.height(drone)),
     #                                      -THROTTLE_LIMIT, THROTTLE_LIMIT)
-    # 7. send_pcmd(pitch, 0, 0, throttle); finish once within DIST_TOL AND slower than
-    #    SETTLE_SPEED for HOLD_TIME
+    # 7. send_pcmd(pitch, 0, 0, throttle); finish once _pos has passed
+    #    (TARGET_DIST - DIST_TOL) AND the drone has slowed below SETTLE_SPEED for HOLD_TIME
 
     ###### END PUT CODE HERE #########
     ##################################

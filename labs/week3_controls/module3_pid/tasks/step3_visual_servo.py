@@ -22,14 +22,14 @@ import neo_lab
 
 # -- Constants --------------------------------------------------------------
 V_MIN = 200
-MIN_AREA = 300
+MIN_AREA = 500
 COL_CENTER = 320
 KP = 0.4
 KI = 0.05
 KD = 0.15
 MAX_YAW = 0.4
-CENTER_TOL = 0.06    # normalized error considered centered
-HOLD_TIME = 3.0
+CENTER_TOL = 0.12    # normalized error considered centered
+HOLD_TIME = 2.0
 
 # -- Module-level state -----------------------------------------------------
 _err_int = 0.0

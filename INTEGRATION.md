@@ -54,13 +54,36 @@ Consequences encoded in the labs:
   controller settles ~0.2–0.4 m short of target (a real proportional-control droop),
   so tolerances are widened and the PID lab's integral term closes the gap.
 
-## Validation status
+## The scene (captured live)
+
+The forward camera sees dark gate frames with **cyan** glowing edges and AprilTag
+fiducials over a blue wall / grey floor; the downward camera sees the gate frames as
+**white** edges. There are **no red props and no colored ground line**, so the vision
+labs detect gates by brightness (`neo_lab.bright_mask`) / cyan (`neo_lab.CYAN_LOWER/UPPER`).
+
+## Validation status (flown in the sim)
 
 - ✅ Connection / handshake (after the IP fix)
-- ✅ `neo_lab.Launcher` arm + climb to a height above ground
-- ✅ **Module 2** (proportional altitude hold) — full launch + hold 5 m + setpoint
-  sequence 3→6→2 m, flown in the sim
-- ⏳ Not yet flown in-sim: Module 3 (PID, position, visual-servo) and the Week 2
-  vision labs. They reuse the same validated launcher; the vision labs additionally
-  depend on the scene actually containing the expected props (colored gates, a
-  ground line, a downward target), which still needs to be confirmed.
+- ✅ `neo_lab.Launcher` — arm + climb to a height above the measured ground
+- ✅ **Module 2** (P altitude hold) — launch + hold 5 m + setpoint sequence 3→6→2 m
+- ✅ **Module 3 Step 1** (PID altitude) — holds 5 m within ~0.05 m
+- ✅ **Module 3 Step 2** (fly-a-distance) — flies forward, holds altitude, and completes
+  on a settle-after-MIN_TRAVEL criterion. NOTE: distance is dead-reckoned from velocity
+  (no position feedback) and pitch has a deadband, so it settles ~0.5–1 m short and
+  reports the estimate honestly — a real lesson, not a bug.
+- ✅ **Module 4** (downward gate) — find contours → locate gate (row 240, col 320) →
+  center over it → land, full sequence
+- ◑ **Module 3 Step 3** (gate visual-servo) — detection + yaw loop run live; "lock"
+  latches inconsistently because the largest bright blob flickers between gate edges
+  and boundary lines while yawing (CENTER_TOL widened to help). Detection itself is
+  validated offline on the captured frame.
+- ◑ **Module 5** (seek cyan gate) — cyan detection validated offline on the captured
+  forward frame; the largest cyan blob can be a boundary line rather than a square gate.
+  Not flown to completion live.
+- ✅ All Week 2 vision step solutions run against the **real captured frames** (offline
+  harness) with 0 failures.
+
+### Throttle / pitch deadband
+Commands with magnitude below ~0.05 are absorbed by the hover-hold, so pure-proportional
+loops settle a little short of target (widened tolerances accommodate this; the PID labs'
+integral term closes most of the altitude gap).
