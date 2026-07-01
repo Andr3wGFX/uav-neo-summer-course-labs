@@ -91,9 +91,11 @@ drone sim course/<week>/<module>/tasks/<step>.py    # just one step, your code
 The simulated drone does **not** behave like a simple "go to (x, y, z)" robot. A few facts
 about how it flies that you'll rely on when writing your controllers:
 
-- **It starts on the ground at a non-zero altitude reading.** `get_altitude()` is not 0 at
-  the ground. So the labs measure height **above the ground sampled at launch** — use
-  `neo_lab.height(drone)`, not the raw altitude, and aim for heights *above* the ground.
+- **`get_altitude()` is absolute, not height above the ground.** It reports the drone's
+  world altitude, and the drone is usually already airborne when your program takes over
+  (you launch it, then press Enter). So measure height **relative to a reference sampled
+  when your program starts** — use `neo_lab.height(drone)` (the Launcher records that
+  reference), not the raw altitude.
 - **`takeoff()` arms the motors but does not climb on its own.** To get airborne you give
   throttle. The shared `neo_lab.Launcher` does this for you (arm, then climb to a safe
   height) — every simulator lab's `main.py` runs it before your steps.
