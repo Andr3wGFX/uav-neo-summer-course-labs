@@ -1,12 +1,16 @@
-# UAV Neo Summer Course Labs — Vision, Controls & Integration
+# UAV Neo Summer Course Labs
 
 MIT BWSI Autonomous Drone Racing Course — UAV Neo
 
-These labs turn the **Week 2 Vision** and **Week 3 Controls** lessons into hands-on labs
-you run against the **UAV Neo simulator**, plus a **Week 4 Integration** set of multi-axis
-flight labs that build on them — the same `labs/<module>/tasks/<step>.py`
-structure as [`uav-neo-prereq-labs`](../uav-neo-prereq-labs). You fill in small chunks of
-code, run them, and watch the drone fly (or, for the math labs, see `PASS`/`FAIL` checks).
+Program an autonomous drone in the **UAV Neo simulator**. Over three weeks you build the
+vision and control skills to make a drone see, fly, and navigate on its own:
+
+- **Week 2 — Vision:** find and measure things in the drone's camera images.
+- **Week 3 — Controls:** turn sensor readings into smooth, stable flight.
+- **Week 4 — Integration:** combine vision and control into multi-axis maneuvers.
+
+Each lab hands you a small piece of code to complete; you run it and watch the drone fly.
+The math labs check your work with `PASS`/`FAIL` instead.
 
 ---
 
@@ -84,7 +88,7 @@ drone sim course/<week>/<module>/tasks/<step>.py    # just one step, your code
 ## 3. Flying in the simulator — what you need to know
 
 The simulated drone does **not** behave like a simple "go to (x, y, z)" robot. A few facts
-that the labs are built around (and that you'll need when tuning your own code):
+about how it flies that you'll rely on when writing your controllers:
 
 - **It starts on the ground at a non-zero altitude reading.** `get_altitude()` is not 0 at
   the ground. So the labs measure height **above the ground sampled at launch** — use
