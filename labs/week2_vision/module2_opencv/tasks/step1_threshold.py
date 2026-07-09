@@ -22,7 +22,7 @@ if _d not in _sys.path:
 import neo_lab
 
 # -- Constants --------------------------------------------------------------
-THRESHOLD_VALUE = 127     # grayscale cutoff (0-255)
+THRESHOLD_VALUE = 100     # grayscale cutoff (0-255)
 HOVER_TIME      = 3.0     # seconds to observe
 
 # -- Module-level state -----------------------------------------------------
@@ -42,7 +42,13 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
-
+    downward_image = drone.camera.get_downward_image()
+    gray_image = cv2.cvtColor(downward_image, cv2.COLOR_RGB2GRAY)
+    _, binary_mask = cv2.threshold(gray_image, THRESHOLD_VALUE, 255, cv2.THRESH_BINARY)
+    white_pixels = np.sum(binary_mask == 255)
+    total_pixels = binary_mask.size
+    fraction_white = white_pixels / total_pixels
+    print(f"Fraction of white pixels: {fraction_white:.4f}")
     # Grab the downward image (drone.camera.get_downward_image()), convert it to
     # grayscale, and threshold at THRESHOLD_VALUE to make a binary mask. Report the
     # fraction of white pixels. Advance _timer and finish (_done) once it reaches
