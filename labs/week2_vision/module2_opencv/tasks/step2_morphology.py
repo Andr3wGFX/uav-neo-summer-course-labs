@@ -43,7 +43,15 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
-
+    downward_image = drone.camera.get_downward_image()
+    gray_image = cv2.cvtColor(downward_image, cv2.COLOR_BGR2GRAY)
+    _, binary_mask = cv2.threshold(gray_image, THRESHOLD_VALUE, 255, cv2.THRESH_BINARY)
+    kernel = np.ones((KERNEL_SIZE, KERNEL_SIZE), np.uint8)
+    opened_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel)
+    white_pixels_before = np.sum(binary_mask == 255)
+    white_pixels_after = np.sum(opened_mask == 255)
+    print(f"White pixels before:{white_pixels_before}, after: {white_pixels_after}")
+    
     # Opening (erode then dilate) removes small speckles but keeps big shapes. Build a
     # binary mask like Step 1, then open it with a KERNEL_SIZE square kernel and compare
     # the white-pixel count before and after to see what was removed. Advance _timer and
@@ -51,7 +59,7 @@ def update(drone):
 
     ###### END PUT CODE HERE #########
     ##################################
-    return _done
+    return _done      
 
 
 if __name__ == "__main__":

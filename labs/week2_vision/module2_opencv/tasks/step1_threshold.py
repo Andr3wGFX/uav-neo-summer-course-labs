@@ -43,7 +43,7 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
     downward_image = drone.camera.get_downward_image()
-    gray_image = cv2.cvtColor(downward_image, cv2.COLOR_RGB2GRAY)
+    gray_image = cv2.cvtColor(downward_image, cv2.COLOR_BGR2GRAY)
     _, binary_mask = cv2.threshold(gray_image, THRESHOLD_VALUE, 255, cv2.THRESH_BINARY)
     white_pixels = np.sum(binary_mask == 255)
     total_pixels = binary_mask.size

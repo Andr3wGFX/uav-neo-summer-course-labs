@@ -42,7 +42,19 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
+    downward_image = drone.camera.get_downward_image() #gets the downward image :D
+    gray_image = cv2.cvtColor(downward_image, cv2.COLOR_BGR2GRAY) #gets gray scale from stuff yeah
+    _timer += drone.get_delta_time() #times :D
+    blurred_image = cv2.blur(gray_image, (KERNEL_SIZE, KERNEL_SIZE))
+    sobel_x = cv2.Sobel(blurred_image, cv2.CV_64F, 1, 0, ksize = 3) 
+    sobel_y = cv2.Sobel(blurred_image, cv2.CV_64F, 0 , 1, ksize = 3) #sobel for y
+    edge_magnitude = np.sqrt(sobel_x**2 + sobel_y **2) #calculates it :D
+    average_edge_strength = edge_magnitude.mean() #averages ^^^
+    if _timer >= HOVER_TIME:
+        print(f"Average edge strength: {average_edge_strength}") #returns the average edge strength after blur and soble stuff :D
+        _done = True
 
+    
     # GOAL: report the average edge strength in the downward image.
     #
     # Grayscale the image, blur it with a KERNEL_SIZE box filter so single-pixel noise
