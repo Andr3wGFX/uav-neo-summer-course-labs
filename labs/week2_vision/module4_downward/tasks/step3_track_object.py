@@ -46,7 +46,32 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+  #  _hold += drone.get_delta_time()
+    image = drone.camera.get_downward_image()
+    best_contour = neo_lab.largest_bright_contour(image, V_MIN, MIN_AREA)
+    
+    if best_contour is None:
+        _hold = 0.0
+        drone.flight.stop()
+        return False
 
+    row, col = uav_utils.get_contour_center(best_contour)
+    row_err = row - ROW_CENTER
+    col_err = col - COL_CENTER
+
+    roll = uav_utils.clamp(-col_err / COL_CENTER * MAX_TILT, -MAX_TILT, MAX_TILT)
+    pitch = uav_utils.clamp(-row_err / ROW_CENTER * MAX_TILT, -MAX_TILT, MAX_TILT)
+    drone.flight.send_pcmd(pitch, roll, 0, 0)
+
+    if abs(row_err) < CENTER_TOL and abs(col_err) < CENTER_TOL:
+        _hold += drone.get_delta_time()
+    else:
+        _hold = 0.0
+
+    if _hold >= HOLD_TIME:
+        _done = True
+        print(f"centered over gate at row {row}, col {col}, hold time {HOLD_TIME:.1f}s")
+    
     # GOAL: move with pitch/roll until the gate sits in the middle of the downward
     # camera, hold that for HOLD_TIME, then finish.
     #
