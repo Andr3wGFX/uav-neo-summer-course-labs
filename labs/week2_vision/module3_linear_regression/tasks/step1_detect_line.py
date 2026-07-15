@@ -42,7 +42,17 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
+    _timer += drone.get_delta_time() #times :D
 
+    downward = drone.camera.get_downward_image()
+    
+    bright_mask = neo_lab.bright_mask(downward, V_MIN)
+
+    bright_pixels = np.count_nonzero(bright_mask)
+
+    if _timer >= HOVER_TIME:
+        print(f"bright pixies counted :D {bright_pixels}")
+        _done = True
     # Gate edges glow bright, so threshold by brightness (HSV Value): neo_lab.bright_mask(
     # image, V_MIN) gives a mask of the bright pixels. Count them, and after HOVER_TIME
     # print the count and set _done. See the README (Key terms).

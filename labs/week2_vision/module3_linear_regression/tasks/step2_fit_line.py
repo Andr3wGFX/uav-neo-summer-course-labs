@@ -36,6 +36,10 @@ def fit_line(points):
     ##################################
     #### START PUT CODE HERE #########
     m, b = 0.0, 0.0
+    points = points.astype(np.float64)
+    xs = points[:, 1] #horiz peeps
+    ys = points[:, 0] #vert peeps
+    m, b = np.polyfit(xs, ys, 1)
     ###### END PUT CODE HERE #########
     ##################################
     return m, b
@@ -53,6 +57,22 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
+    _timer += drone.get_delta_time() #times :D
+
+    downward = drone.camera.get_downward_image()
+    
+    bright_mask = neo_lab.bright_mask(downward, V_MIN)
+    points = np.argwhere(bright_mask > 0)
+    if len(points) < MIN_PIXELS:
+        print(f"not enough bright pixies to fit a line :( {len(points)} < {MIN_PIXELS}")
+        return False
+    m, b = fit_line(points)
+    
+    if _timer >= HOVER_TIME:
+        print(f"m: {m}, b: {b}")
+        _done = True
+
+# pls work 🙏
 
     # Build the bright-edge mask like Step 1 and collect the (row, col) of every bright
     # pixel. If there are fewer than MIN_PIXELS, there is not enough edge to fit -> return

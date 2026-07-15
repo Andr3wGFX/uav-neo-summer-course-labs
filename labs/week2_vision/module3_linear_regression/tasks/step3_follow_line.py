@@ -6,6 +6,8 @@ Week 2/3 Lab — Step 3: Follow the Edge
 Steer the drone to keep the bright edge centered while flying forward.
 """
 
+from matplotlib import image
+
 import drone_core
 import drone_utils as uav_utils
 import cv2
@@ -45,6 +47,26 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    _timer += drone.get_delta_time() #times :D
+    
+    image = drone.camera.get_downward_image()
+    mask = neo_lab.bright_mask(image, V_MIN) > 0
+    points = np.argwhere(mask)
+
+    if len(points) < MIN_PIXELS:
+        drone.flight.stop()
+    else:
+        edge_col = np.mean(points[:, 1])
+        offset = edge_col - IMAGE_CENTER
+        offset_normalized = offset / IMAGE_CENTER
+        roll = uav_utils.clamp(offset_normalized * MAX_ROLL, -MAX_ROLL, MAX_ROLL)
+        drone.flight.send_pcmd(FORWARD_PITCH, roll, 0.0, 0.0)
+
+    if _timer >= FOLLOW_TIME:
+        print("drone off da clawk")
+        drone.flight.stop()
+        _done = True
+
 
     # GOAL: fly forward at FORWARD_PITCH while strafing (roll) to keep the bright
     # edge under the middle of the downward camera.
