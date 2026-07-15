@@ -43,7 +43,18 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
+    _timer += drone.get_delta_time() #time :D
+    image = drone.camera.get_downward_image()
+    best_contour = neo_lab.largest_bright_contour(image, V_MIN, MIN_AREA)
+    if best_contour is None:
+        return False
 
+    center = uav_utils.contour_center(best_contour)
+    area = uav_utils. contour_area(best_contour)
+
+    if _timer >= HOVER_TIME:
+        print(f"largest gate at row {center[1]:.1f}, col {center[0]:. 1f}, area {area: .1f}")
+        return True
     # Find the largest bright contour with neo_lab.largest_bright_contour(image, V_MIN,
     # MIN_AREA); if it returns None nothing is bright enough yet -> return False. Otherwise
     # report its center and area (see uav_utils for contour helpers). Advance _timer and
