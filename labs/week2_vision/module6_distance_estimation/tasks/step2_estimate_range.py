@@ -50,7 +50,27 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    raw_image = drone.camera.get_color_image()
+    best_gate = neo_lab.largest_green_gate(raw_image, MIN_AREA)
 
+    x,y,w,h = cv2.boundingRect(best_gate)
+    if best_gate is None:
+        drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)  # spinny :D
+        return False
+    
+    distance = FOCAL_PX * REAL_GATE_WIDTH / w
+    gate_col = x + w/2.0
+    yaw_error = gate_col - COL_CENTER
+
+    yaw = uav_utils.clamp(yaw_error / COL_CENTER, -MAX_YAW, MAX_YAW)
+    pitch = APPROACH_PITCH if distance > STOP_DIST else 0
+    drone.flight.send_pcmd(pitch, 0, yaw, 0)
+    
+    if distance <= STOP_DIST:
+        drone.flight.stop()
+        print(f"gate's close bro I'm hopping off, d = {distance} <= {STOP_DIST}")
+
+    
     # GOAL: fly toward the gate, estimating distance from its apparent width, and
     # stop once distance <= STOP_DIST.
     #
