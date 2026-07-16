@@ -59,6 +59,46 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    delta_time = drone.get_delta_time()
+    drone.flight.send_pcmd(PROBE_PITCH, 0, 0, 0)
+    _timer += delta_time
+    _interval += delta_time
+    _frame += 1
+
+    if _frame % SKIP == 0:
+        gray_image = cv2.cvtColor(drone.camera.get_downward_image(), cv2.COLOR_BGR2GRAY)
+
+        if _prev_gray is None or _prev_pts is None or len(_prev_pts) < MIN_PTS:
+            _prev_pts = cv2.goodFeaturesToTrack(gray_image, **FEATURE_PARAMS)
+        else:
+            new_pts, status, error = cv2.calcOpticalFlowPyrLK(
+                _prev_gray, gray_image, _prev_pts, None, **LK_PARAMS)
+            if new_pts is not None and status is not None:
+                kept_pts = status.flatten() == 1
+                gd_new_pts = new_pts[kept_pts].reshape(-1, 2)   # cool new kids
+                gd_prev_pts = _prev_pts[kept_pts].reshape(-1, 2)  # unc ones
+                if len(gd_new_pts) > 0:
+                    disp = gd_new_pts - gd_prev_pts
+                    avg_dx = float(disp[:, 0].mean())
+                    avg_dy = float(disp[:, 1].mean())
+
+                    height = max(neo_lab.height(drone), 0.01)
+                    metres_de_pixel = (2 * height * HFOV_TAN) / IMAGE_WIDTH
+
+                    est_vx = -avg_dx * metres_de_pixel / _interval
+                    est_vz = -avg_dy * metres_de_pixel / _interval
+
+                    vx, vy, vz = drone.physics.get_linear_velocity()
+                    print(f"estimated velocity: ({est_vx:.2f}, {est_vz:.2f}) m/s, "
+                          f"true velocity: ({vx:.2f}, {vz:.2f}) m/s")
+                _prev_pts = gd_new_pts.reshape(-1, 1, 2)
+        _prev_gray = gray_image
+        _interval = 0.0
+
+    if _timer >= RUN_TIME:
+        drone.flight.stop()
+        print("drone off da clawk")
+        _done = True
 
     # GOAL: print an estimated horizontal velocity from optical flow next to the true
     # velocity, so you can see how well vision tracks motion.

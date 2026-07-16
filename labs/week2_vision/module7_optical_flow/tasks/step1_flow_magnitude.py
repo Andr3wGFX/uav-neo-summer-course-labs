@@ -59,6 +59,36 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    drone.flight.send_pcmd(PROBE_PITCH, 0, 0, 0) #move forward yo
+    _timer += drone.get_delta_time()
+    _frame += 1
+
+    if _frame % SKIP == 0:
+        gray_image = cv2.cvtColor(drone.camera.get_downward_image(), cv2.COLOR_BGR2GRAY)
+
+        if _prev_gray is None or _prev_pts is None or len(_prev_pts) < MIN_PTS:
+            _prev_pts = cv2.goodFeaturesToTrack(gray_image, mask = None, **FEATURE_PARAMS)
+
+        else:
+            new_pts, status, error = cv2.calcOpticalFlowPyrLK(_prev_gray, gray_image, _prev_pts, None, **LK_PARAMS)
+
+            if new_pts is not None:
+                gd_new_pts = new_pts[status == 1] #good new pointies
+                gd_prev_pts = _prev_pts[status == 1] #good pointies that are unc
+            
+                if len(gd_new_pts) > 0:
+                    disp = gd_new_pts - gd_prev_pts
+            
+                    _last_mag = np.mean(np.linalg.norm(disp, axis = 1))
+            
+                _prev_pts = gd_new_pts.reshape(-1, 1, 2)
+            
+        _prev_gray = gray_image
+
+    if _timer >= HOVER_TIME:
+        print(f"optical flow magnitude is this yo: {_last_mag:.3f} px/frame")
+        drone.flight.stop()
+        _done = True
 
     # Keep the drone drifting (PROBE_PITCH) and the clock running EVERY frame; only pull
     # the image and run flow every SKIP-th frame (that vision work is what would lag the
