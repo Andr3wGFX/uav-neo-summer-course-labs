@@ -22,10 +22,13 @@ if _d not in _sys.path:
 import neo_lab
 
 # -- Constants --------------------------------------------------------------
-LOWER = neo_lab.CYAN_LOWER
-UPPER = neo_lab.CYAN_UPPER
+#LOWER = neo_lab.CYAN_LOWER
+#UPPER = neo_lab.CYAN_UPPER
 MIN_AREA = 400
 HOVER_TIME = 3.0
+
+LOWER = GREEN_LOWER = np.array([36,50,50])
+UPPER = GREEN_UPPER = np.array([86, 255, 255])
 
 # -- Module-level state -----------------------------------------------------
 _timer = 0.0
@@ -44,6 +47,20 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
+    _timer += drone.get_delta_time()
+    raw_image = drone.camera.get_color_image()
+    hsv_image = cv2.cvtColor(raw_image, cv2.COLOR_BGR2HSV)
+    best_gate = neo_lab.largest_green_gate(hsv_image, MIN_AREA)
+
+    if best_gate is None:
+        print("No gate :(")
+    else: 
+        x, y, w, h = cv2.boundingRect(best_gate)
+        print(f"Bounding box: (x,y,w,h) = ({x},{y},{w},{h})")
+    
+    if _timer >= HOVER_TIME:
+        _done = True
+    
 
     # The long glowing boundary lines are also cyan, so use neo_lab.largest_cyan_gate(
     # image, MIN_AREA), which keeps only square-ish (gate-shaped) contours; it returns None

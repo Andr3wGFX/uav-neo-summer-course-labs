@@ -44,7 +44,26 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    raw_image = drone.camera.get_color_image()
+    best_gate = neo_lab.largest_green_gate(raw_image, MIN_AREA)
 
+    if best_gate is None:
+        drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)  # spinny :D
+        return False
+    
+    x, y, w, h = cv2.boundingRect(best_gate)
+    center_x = x + w  / 2.0
+    yaw_error = center_x - COL_CENTER
+    yaw = uav_utils.clamp(yaw_error / COL_CENTER, -MAX_YAW, MAX_YAW)
+    pitch = APPROACH_PITCH if abs(yaw_error) < CENTER_TOL and w < TARGET_WIDTH else 0
+    drone.flight.send_pcmd(pitch, 0, yaw, 0)
+
+    if w >= TARGET_WIDTH:
+        drone.flight.stop()
+        print(f"gate is close enough yo get off w = {w} >= {TARGET_WIDTH}")
+        _done = True
+
+    
     # GOAL: spin until a cyan gate is found, yaw to center it, then fly forward until
     # it fills the view (bounding-box width >= TARGET_WIDTH).
     #

@@ -27,6 +27,9 @@ LOWER = neo_lab.CYAN_LOWER    # [80, 40, 150]
 UPPER = neo_lab.CYAN_UPPER    # [105, 255, 255]
 HOVER_TIME = 3.0
 
+GREEN_LOWER = np.array([36,50,50])
+GREEN_UPPER = np.array([86, 255, 255])
+
 # -- Module-level state -----------------------------------------------------
 _timer = 0.0
 _done  = False
@@ -44,6 +47,14 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
+
+    _timer += drone.get_delta_time()
+    raw_image = drone.camera.get_color_image()
+    hsv_image = cv2.cvtColor(raw_image, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv_image, GREEN_LOWER, GREEN_UPPER)
+    print(f"fraction of masked pixies: {np.sum(mask > 0) / mask.size:.3f}")
+    if _timer >= HOVER_TIME:
+        _done = True
 
     # The gates glow cyan; the wall is blue. A single HSV range (LOWER..UPPER) isolates
     # the gates: convert the forward color image to HSV and build a mask from that range.

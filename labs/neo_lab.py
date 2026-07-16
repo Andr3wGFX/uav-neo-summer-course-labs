@@ -31,7 +31,8 @@ _ground_alt = 0.0
 # Cyan gate edges on the forward camera (separates from the blue background ~hue 108).
 CYAN_LOWER = np.array([80, 40, 150], dtype=np.uint8)
 CYAN_UPPER = np.array([105, 255, 255], dtype=np.uint8)
-
+GREEN_LOWER = np.array([36,50,50])
+GREEN_UPPER = np.array([86, 255, 255])
 
 def bright_mask(image, v_min=200):
     """Binary mask (0/255) of the glowing gate edges, by HSV Value (brightness)."""
@@ -85,6 +86,11 @@ def largest_cyan_gate(image, min_area=400, max_aspect=2.5):
     mask = cv2.inRange(hsv, CYAN_LOWER, CYAN_UPPER)
     return _gate_in_mask(mask, min_area, max_aspect)
 
+def largest_green_gate(image, min_area=400, max_aspect=2.5):
+    """Largest square-ish GREEN gate on the forward camera, or None."""
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, GREEN_LOWER, GREEN_UPPER)
+    return _gate_in_mask(mask, min_area, max_aspect)
 
 def gate_nearest_to(image, target_col, v_min=200, min_area=500, max_aspect=2.5,
                     dilate=2):
