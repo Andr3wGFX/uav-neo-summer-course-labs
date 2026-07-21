@@ -45,7 +45,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    output = 0.0
+    return kp * err + ki * err_int + kd*err_dot
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -65,7 +65,42 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    dt = drone.get_delta_time()
+    image = drone.camera.get_color_image()
 
+    if _target_col is None:
+        best = neo_lab.gate_nearest_center(image, V_MIN, MIN_AREA) #find in image
+    else:
+        best = neo_lab.gate_nearest_to(image, _target_col, V_MIN, MIN_AREA) #use nearest one if found
+    
+    if best is None: #yo bro I'm blind
+        drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)
+        _target_col = None
+        _hold = 0.0
+        _err_int = 0.0
+        return False
+    
+    row, col = uav_utils.get_contour_center(best)
+    
+    _target_col = col
+    error = (col - COL_CENTER) / COL_CENTER
+    _err_int = (error - _prev_err) / dt if dt > 0 else 0.0
+    
+    _prev_err = error
+
+    yaw = uav_utils.clamp(pid_control(error, _err_int, err_dot, KP, KI, KD, ))
+
+    drone.flight.send_pcmd(0, 0, yaw, 0)
+
+    if abs(error) < CENTER_TOL:
+        _hold += dt
+
+    if _hold >= HOLD_TIME:
+        drone.flight.stop()
+        print("I'm locked trust")
+        _done = True
+
+    return _done
     # GOAL: yaw with a PID loop so a glowing gate stays centered in the forward
     # camera; finish once it is centered (abs(error) < CENTER_TOL) for HOLD_TIME.
     #
