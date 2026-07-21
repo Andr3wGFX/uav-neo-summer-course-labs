@@ -60,7 +60,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    output = 0.0
+    return kp * err + ki * err_int + kd * err_dot
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -84,7 +84,25 @@ def update(drone):
     r, r_dot = reference(_t)
     ##################################
     #### START PUT CODE HERE #########
+    error = -neo_lab.height(drone) + r
+    _err_int = uav_utils.clamp(_err_int + error * dt, -INT_CLAMP, INT_CLAMP)
+    err_dot = (error - _prev_err) / dt if dt > 0 else 0.0
 
+    _prev_err = error
+
+    returned = pid_control(error, _err_int, err_dot, KP, KI, KD)
+    throttle = uav_utils.clamp(returned + KFF * r_dot, -THROTTLE_LIMIT, THROTTLE_LIMIT)
+
+    drone.flight.send_pcmd(0, 0, 0, throttle)
+
+    _max_err = max(_max_err, abs(error))
+
+    if _t > DURATION:
+        drone.flight.stop()
+        print(f"I got lock within {_max_err:.2f}m")
+        _done = True
+
+    return _done
     # GOAL: keep the drone ON the moving target r from reference(_t), not behind it.
     #
     # Run PID on the height error (r - neo_lab.height(drone)) exactly as in Step 1:

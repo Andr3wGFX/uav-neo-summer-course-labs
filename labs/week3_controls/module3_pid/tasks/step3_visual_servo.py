@@ -45,7 +45,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    return kp * err + ki * err_int + kd*err_dot
+    return kp * err + ki * err_int + kd * err_dot
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -84,11 +84,13 @@ def update(drone):
     
     _target_col = col
     error = (col - COL_CENTER) / COL_CENTER
-    _err_int = (error - _prev_err) / dt if dt > 0 else 0.0
+    _err_int = uav_utils.clamp(_err_int + error * dt, -1.0, 1.0)
+    err_dot = (error - _prev_err) / dt if dt > 0 else 0.0
+
     
     _prev_err = error
 
-    yaw = uav_utils.clamp(pid_control(error, _err_int, err_dot, KP, KI, KD, ))
+    yaw = uav_utils.clamp(pid_control(error, _err_int, err_dot, KP, KI, KD, ), -MAX_YAW, MAX_YAW)
 
     drone.flight.send_pcmd(0, 0, yaw, 0)
 
