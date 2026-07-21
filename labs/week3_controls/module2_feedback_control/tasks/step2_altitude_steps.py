@@ -44,6 +44,29 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    if _index >= len(SETPOINTS):
+        drone.flight.stop()
+        print("we done yo")
+        _done = True
+        return _done
+
+    target = SETPOINTS[_index]
+
+    height = neo_lab.height(drone)
+    error = target - height
+
+    throttle = uav_utils.clamp(KP * error, -THROTTLE_LIMIT, THROTTLE_LIMIT)
+    drone.flight.send_pcmd(0 , 0, 0, throttle)
+
+    if abs(error) < TOL:
+        _hold += drone.get_delta_time()
+    else:
+        _hold = 0.0
+
+    if _hold >= HOLD_TIME:
+        print(f"reached point {target}, height is {height}")
+        _index += 1
+        _hold = 0.0
 
     # GOAL: hold each height in SETPOINTS in turn, moving to the next once you have
     # stayed within TOL of the current one for HOLD_TIME. Finish after the last.

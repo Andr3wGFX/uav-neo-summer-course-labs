@@ -43,7 +43,21 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    height = neo_lab.height(drone)
+    error = TARGET_HEIGHT - height
 
+    throttle = uav_utils.clamp(KP * error, -THROTTLE_LIMIT, THROTTLE_LIMIT)
+    drone.flight.send_pcmd(0 , 0, 0, throttle)
+
+    if abs(error) < TOL:
+        _hold += drone.get_delta_time()
+    else:
+        _hold = 0.0
+
+    if _hold > HOLD_TIME:
+        drone.flight.stop()
+        print(f"held it at {TARGET_HEIGHT}m for long enough, final height is:{height:.2f}m")
+        _done = True
     # Use proportional control on the height error to hold TARGET_HEIGHT.
     # neo_lab.height(drone) reports meters above the launch ground. Throttle is a
     # vertical-velocity command; clamp it to +/-THROTTLE_LIMIT. Finish (set _done) once

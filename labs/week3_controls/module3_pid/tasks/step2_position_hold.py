@@ -45,7 +45,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    output = 0.0
+    return kp * err + ki * err_int + kd * err_dot
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -66,7 +66,33 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    dt = drone.get_delta_time()
+    _t += dt
+    velocity = drone.physics.get_linear_velocity()
+    
+    _pos += velocity[2] * dt
+    error = TARGET_DIST - _pos
 
+    _err_int += error * dt
+    err_dot = -velocity[2]
+
+    _prev_err = error
+
+    pitch = uav_utils.clamp(pid_control(error, _err_int, err_dot, KP, KI, KD), -PITCH_LIMIT, PITCH_LIMIT)
+    throttle = uav_utils.clamp(ALT_KP * (TARGET_HEIGHT - neo_lab.height(drone)), -THROTTLE_LIMIT, THROTTLE_LIMIT)
+
+    drone.flight.send_pcmd(pitch, 0, 0, throttle)
+
+    if _t > MIN_TRAVEL and abs(velocity[2]) < SETTLE_SPEED:
+        _hold += dt
+    else:
+        _hold = 0.0
+    
+    if _hold >= HOLD_TIME:
+        drone.flight.stop()
+        print(f"got to like {_pos:.2f}m of dis target distance {TARGET_DIST}")
+        _done = True
+        return _done    
     # There is no direct (x, z) readout, so estimate forward distance by dead reckoning:
     # integrate the forward component of drone.physics.get_linear_velocity() over time.
     # PID that distance to TARGET_DIST for the pitch command (clamped to PITCH_LIMIT), and
