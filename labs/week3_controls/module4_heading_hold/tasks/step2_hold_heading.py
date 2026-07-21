@@ -53,7 +53,23 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
+    pitch, roll, yaw = drone.physics.get_attitude()
 
+    error = heading_error(TARGET_HEADING, yaw)
+    cmd = uav_utils.clamp(KP_YAW * error, -MAX_YAW, MAX_YAW)
+
+    drone.flight.send_pcmd(0, 0, cmd, 0)
+
+    if abs(error) < TOL:
+        _hold += drone.get_delta_time()
+    else:
+        _hold = 0.0
+    
+    if _hold>=HOLD_TIME:
+        drone.flight.stop()
+        print(f"holding on to {TARGET_HEADING:.0f} degrees while yaw is {yaw:.1f}")
+        _done = True
+    
     # GOAL: rotate to TARGET_HEADING and hold it within TOL for HOLD_TIME.
     #
     # Tools: drone.physics.get_attitude() -> (pitch, roll, yaw) deg; heading_error()
