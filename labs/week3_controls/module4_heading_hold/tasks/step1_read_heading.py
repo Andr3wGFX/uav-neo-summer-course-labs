@@ -40,7 +40,7 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
-
+    
     # Read the drone's attitude from drone.physics.get_attitude() (pitch, roll, yaw in
     # degrees; yaw is the compass heading). Turn slowly with PROBE_YAW so the heading
     # visibly changes, and after HOVER_TIME stop, print the final yaw, and set _done.
