@@ -36,7 +36,7 @@ def heading_error(target, current):
     """Smallest signed angle (deg) from current heading to target, in -180..180."""
     ##################################
     #### START PUT CODE HERE #########
-    error = 0.0
+    return ((target-current + 180.0) % 360.0) - 180.0
     ###### END PUT CODE HERE #########
     ##################################
     return error
